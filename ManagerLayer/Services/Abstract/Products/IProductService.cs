@@ -23,4 +23,5 @@ public interface IProductService
     Task<bool> AddProductToWarehouseAsync(Guid productId, AddProductToWarehouseDto request, string userId);
     Task<bool> RemoveProductFromWarehouseAsync(Guid productId, Guid warehouseId, string userId);
     Task<bool> DecreaseWarehouseStockAsync(Guid productId, DecreaseWarehouseStockDto request, string userId);
+    Task<PagedDataListModel<WarehouseProductItemDto>> GetWarehouseProductsForUserAsync(Guid warehouseId, int pageNumber, int pageSize, string userId);
 }

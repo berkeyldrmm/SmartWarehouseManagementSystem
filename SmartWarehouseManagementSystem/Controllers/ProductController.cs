@@ -238,6 +238,21 @@ public class ProductController : BaseController
         return Ok(new DataResponse<bool>(true));
     }
 
+    [HttpGet("user/warehouse/{warehouseId:guid}")]
+    [RoleValidation("User")]
+    public async Task<IActionResult> GetWarehouseProductsForUserAsync(Guid warehouseId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        try
+        {
+            var data = await _productService.GetWarehouseProductsForUserAsync(warehouseId, pageNumber, pageSize, UserId.ToString());
+            return Ok(new DataResponse<PagedDataListModel<WarehouseProductItemDto>>(data));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new ErrorResponse(404, [ex.Message]));
+        }
+    }
+
     [HttpPost("user/warehouse/add/{productId:guid}")]
     [RoleValidation("User")]
     public async Task<IActionResult> AddProductToWarehouseForUserAsync(Guid productId, [FromBody] AddProductToWarehouseDto request)

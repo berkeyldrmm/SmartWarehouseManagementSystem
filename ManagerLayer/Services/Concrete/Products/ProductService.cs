@@ -405,4 +405,78 @@ public class ProductService : IProductService
 
         return await _warehouseProductRepository.UpdateAsync(warehouseProduct);
     }
+
+    public async Task<IEnumerable<WarehouseProductItemDto>> GetWarehouseProductsForUserAsync(Guid warehouseId, string userId)
+    {
+        var userCompanyId = await _companyService.GetCompanyIdByUserIdAsync(userId);
+
+        IEnumerable<Expression<Func<Warehouse, bool>>> warehousePredicates =
+        [
+            w => w.Id == warehouseId,
+            w => w.CompanyId == userCompanyId,
+            w => !w.IsDeleted
+        ];
+
+        var warehouseExists = await _warehouseRepository.ExistAsync(warehousePredicates);
+        if (!warehouseExists)
+        {
+            throw new KeyNotFoundException("Depo bulunamadý.");
+        }
+
+        IEnumerable<Expression<Func<WarehouseProduct, bool>>> predicates =
+        [
+            wp => wp.WarehouseId == warehouseId,
+            wp => !wp.IsDeleted,
+            wp => !wp.Product.IsDeleted,
+            wp => wp.Product.CompanyId == userCompanyId
+        ];
+
+        return await _warehouseProductRepository.GetByFiltersAsync(predicates, wp => new WarehouseProductItemDto
+        {
+            ProductId = wp.ProductId,
+            ProductName = wp.Product.Name,
+            ProductDescription = wp.Product.Description,
+            ProductPrice = wp.Product.Price,
+            Quantity = wp.Quantity
+        });
+    }
+
+    public async Task<PagedDataListModel<WarehouseProductItemDto>> GetWarehouseProductsForUserAsync(Guid warehouseId, int pageNumber, int pageSize, string userId)
+    {
+        var userCompanyId = await _companyService.GetCompanyIdByUserIdAsync(userId);
+
+        IEnumerable<Expression<Func<Warehouse, bool>>> warehousePredicates =
+        [
+            w => w.Id == warehouseId,
+            w => w.CompanyId == userCompanyId,
+            w => !w.IsDeleted
+        ];
+
+        var warehouseExists = await _warehouseRepository.ExistAsync(warehousePredicates);
+        if (!warehouseExists)
+        {
+            throw new KeyNotFoundException("Depo bulunamadý.");
+        }
+
+        IEnumerable<Expression<Func<WarehouseProduct, bool>>> predicates =
+        [
+            wp => wp.WarehouseId == warehouseId,
+            wp => !wp.IsDeleted,
+            wp => !wp.Product.IsDeleted,
+            wp => wp.Product.CompanyId == userCompanyId
+        ];
+
+        return await _warehouseProductRepository.GetPagedDataListAsync(
+            pageNumber,
+            pageSize,
+            wp => new WarehouseProductItemDto
+            {
+                ProductId = wp.ProductId,
+                ProductName = wp.Product.Name,
+                ProductDescription = wp.Product.Description,
+                ProductPrice = wp.Product.Price,
+                Quantity = wp.Quantity
+            },
+            predicates);
+    }
 }
