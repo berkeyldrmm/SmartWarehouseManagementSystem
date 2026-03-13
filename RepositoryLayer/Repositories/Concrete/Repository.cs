@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using RepositoryLayer.Context;
 using RepositoryLayer.Pagination;
 using RepositoryLayer.Repositories.Abstraction;
-using RepositoryLayer.UnitOfWorks.Abstraction;
 using System.Linq.Expressions;
 
 namespace RepositoryLayer.Repositories.Concrete;
@@ -12,13 +11,11 @@ public class Repository<T> : IRepository<T> where T : class, IEntity
 {
     private readonly SmartWarehouseManagementSystemDbContext _context;
     private readonly DbSet<T> _dbSet;
-    private readonly IUnitOfWork _unitOfWork;
 
-    public Repository(SmartWarehouseManagementSystemDbContext context, IUnitOfWork unitOfWork)
+    public Repository(SmartWarehouseManagementSystemDbContext context)
     {
         _context = context;
         _dbSet = _context.Set<T>();
-        _unitOfWork = unitOfWork;
     }
 
     private static IQueryable<T> ApplyPredicates(IQueryable<T> query, IEnumerable<Expression<Func<T, bool>>>? predicates)
@@ -39,7 +36,7 @@ public class Repository<T> : IRepository<T> where T : class, IEntity
     public async Task<bool> AddAsync(T entity)
     {
         var entityEntry = await _dbSet.AddAsync(entity);
-        return entityEntry.State == EntityState.Added ? await _unitOfWork.SaveChangesAsync() > 0 : false;
+        return entityEntry.State == EntityState.Added;
     }
 
     public async Task<int> CountAsync(IEnumerable<Expression<Func<T, bool>>>? predicates = null)
@@ -53,18 +50,16 @@ public class Repository<T> : IRepository<T> where T : class, IEntity
         entity.IsDeleted = true;
         entity.DeletedAt = DateTime.UtcNow;
         entity.UpdatedAt = DateTime.UtcNow;
-        _dbSet.Update(entity);
+        var entityEntry = _dbSet.Update(entity);
 
-        return await _unitOfWork.SaveChangesAsync() > 0;
+        return entityEntry.State == EntityState.Modified;
     }
 
-    public async Task<bool> DeleteRangeAsync(IEnumerable<Guid> deleteIds)
+    public async Task DeleteRangeAsync(IEnumerable<Guid> deleteIds)
     {
         var entities = await _dbSet.Where(x => deleteIds.Contains(x.Id)).ToListAsync();
         if (entities.Count == 0)
-        {
-            return false;
-        }
+            return;
 
         var now = DateTime.UtcNow;
         foreach (var entity in entities)
@@ -75,7 +70,6 @@ public class Repository<T> : IRepository<T> where T : class, IEntity
         }
 
         _dbSet.UpdateRange(entities);
-        return await _unitOfWork.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> ExistAsync(IEnumerable<Expression<Func<T, bool>>> predicates)
@@ -171,6 +165,6 @@ public class Repository<T> : IRepository<T> where T : class, IEntity
     {
         entity.UpdatedAt = DateTime.UtcNow;
         var entityEntry = _dbSet.Update(entity);
-        return entityEntry.State == EntityState.Modified ? await _unitOfWork.SaveChangesAsync() > 0 : false;
+        return entityEntry.State == EntityState.Modified;
     }
 }

@@ -222,11 +222,11 @@ public class ProductService : IProductService
         return await _productRepository.DeleteAsync(product);
     }
 
-    public async Task<bool> DeleteRangeAsync(IEnumerable<Guid> ids, string? userId, bool isAdmin)
+    public async Task DeleteRangeAsync(IEnumerable<Guid> ids, string? userId, bool isAdmin)
     {
         if (isAdmin)
         {
-            return await _productRepository.DeleteRangeAsync(ids);
+            await _productRepository.DeleteRangeAsync(ids);
         }
 
         var requiredUserId = ProductServiceHelper.GetRequiredUserId(userId, isAdmin);
@@ -239,7 +239,7 @@ public class ProductService : IProductService
         ];
 
         var allowedIds = await _productRepository.GetByFiltersAsync(predicates, p => p.Id);
-        return await _productRepository.DeleteRangeAsync(allowedIds);
+        await _productRepository.DeleteRangeAsync(allowedIds);
     }
 
     public async Task<bool> AddProductToWarehouseAsync(Guid productId, AddProductToWarehouseDto request, string userId)

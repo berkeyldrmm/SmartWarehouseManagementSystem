@@ -26,5 +26,5 @@ public interface IRepository<T> where T : IEntity
     Task<bool> AddAsync(T entity);
     Task<bool> UpdateAsync(T entity);
     Task<bool> DeleteAsync(T entity);
-    Task<bool> DeleteRangeAsync(IEnumerable<Guid> deleteIds);
+    Task DeleteRangeAsync(IEnumerable<Guid> deleteIds);
 }

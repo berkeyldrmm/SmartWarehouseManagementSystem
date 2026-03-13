@@ -19,7 +19,7 @@ public interface IProductService
     Task<bool> AddForUserAsync(CreateProductForUserDto product, string userId);
     Task<bool> UpdateAsync(Guid id, UpdateProductDto product, string? userId, bool isAdmin);
     Task<bool> DeleteAsync(Guid id, string? userId, bool isAdmin);
-    Task<bool> DeleteRangeAsync(IEnumerable<Guid> ids, string? userId, bool isAdmin);
+    Task DeleteRangeAsync(IEnumerable<Guid> ids, string? userId, bool isAdmin);
     Task<bool> AddProductToWarehouseAsync(Guid productId, AddProductToWarehouseDto request, string userId);
     Task<bool> RemoveProductFromWarehouseAsync(Guid productId, Guid warehouseId, string userId);
     Task<bool> DecreaseWarehouseStockAsync(Guid productId, DecreaseWarehouseStockDto request, string userId);

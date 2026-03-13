@@ -3,6 +3,7 @@ using ManagerLayer.Authorization;
 using ManagerLayer.Services.Abstract.Warehouses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RepositoryLayer.UnitOfWorks.Abstraction;
 using SmartWarehouseManagementSystem.Wrappers;
 
 namespace SmartWarehouseManagementSystem.Controllers;
@@ -13,10 +14,12 @@ namespace SmartWarehouseManagementSystem.Controllers;
 public class WarehouseController : BaseController
 {
     private readonly IWarehouseService _warehouseService;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public WarehouseController(IWarehouseService warehouseService)
+    public WarehouseController(IWarehouseService warehouseService, IUnitOfWork unitOfWork)
     {
         _warehouseService = warehouseService;
+        _unitOfWork = unitOfWork;
     }
 
     [HttpGet]
@@ -24,6 +27,7 @@ public class WarehouseController : BaseController
     public async Task<IActionResult> GetAllForUserAsync()
     {
         var data = await _warehouseService.GetAllForUserAsync(UserId.ToString());
+        await _unitOfWork.SaveChangesAsync();
         return Ok(new DataResponse<object>(data));
     }
 
@@ -34,6 +38,7 @@ public class WarehouseController : BaseController
         try
         {
             var data = await _warehouseService.GetByIdForUserAsync(id, UserId.ToString());
+            await _unitOfWork.SaveChangesAsync();
             return Ok(new DataResponse<object>(data));
         }
         catch (KeyNotFoundException ex)
@@ -47,6 +52,7 @@ public class WarehouseController : BaseController
     public async Task<IActionResult> AddForUserAsync([FromBody] CreateWarehouseDto request)
     {
         var result = await _warehouseService.AddForUserAsync(request, UserId.ToString());
+        await _unitOfWork.SaveChangesAsync();
         if (!result)
         {
             return BadRequest(new ErrorResponse(400, ["Depo eklenemedi."]));
@@ -62,6 +68,7 @@ public class WarehouseController : BaseController
         try
         {
             var result = await _warehouseService.UpdateForUserAsync(id, request, UserId.ToString());
+            await _unitOfWork.SaveChangesAsync();
             if (!result)
             {
                 return BadRequest(new ErrorResponse(400, ["Depo güncellenemedi."]));
@@ -82,6 +89,7 @@ public class WarehouseController : BaseController
         try
         {
             var result = await _warehouseService.DeleteForUserAsync(id, UserId.ToString());
+            await _unitOfWork.SaveChangesAsync();
             if (!result)
             {
                 return BadRequest(new ErrorResponse(400, ["Depo silinemedi."]));

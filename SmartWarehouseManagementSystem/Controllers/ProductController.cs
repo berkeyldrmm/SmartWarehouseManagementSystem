@@ -4,6 +4,7 @@ using ManagerLayer.Services.Abstract.Products;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RepositoryLayer.Pagination;
+using RepositoryLayer.UnitOfWorks.Abstraction;
 using SmartWarehouseManagementSystem.Wrappers;
 
 namespace SmartWarehouseManagementSystem.Controllers;
@@ -14,10 +15,12 @@ namespace SmartWarehouseManagementSystem.Controllers;
 public class ProductController : BaseController
 {
     private readonly IProductService _productService;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public ProductController(IProductService productService)
+    public ProductController(IProductService productService, IUnitOfWork unitOfWork)
     {
         _productService = productService;
+        _unitOfWork = unitOfWork;
     }
 
     [HttpGet("admin/all")]
@@ -72,6 +75,7 @@ public class ProductController : BaseController
     public async Task<IActionResult> AddAsync([FromBody] CreateProductDto product)
     {
         var result = await _productService.AddAsync(product, null, true);
+        await _unitOfWork.SaveChangesAsync();
         if (!result)
         {
             return BadRequest(new ErrorResponse(400, ["Ürün eklenemedi."]));
@@ -87,6 +91,7 @@ public class ProductController : BaseController
         try
         {
             var result = await _productService.UpdateAsync(id, product, null, true);
+            await _unitOfWork.SaveChangesAsync();
             if (!result)
             {
                 return BadRequest(new ErrorResponse(400, ["Ürün güncellenemedi."]));
@@ -107,6 +112,7 @@ public class ProductController : BaseController
         try
         {
             var result = await _productService.DeleteAsync(id, null, true);
+            await _unitOfWork.SaveChangesAsync();
             if (!result)
             {
                 return BadRequest(new ErrorResponse(400, ["Ürün silinemedi."]));
@@ -124,12 +130,9 @@ public class ProductController : BaseController
     [RoleValidation("Admin")]
     public async Task<IActionResult> DeleteRangeAsync([FromBody] IEnumerable<Guid> ids)
     {
-        var result = await _productService.DeleteRangeAsync(ids, null, true);
-        if (!result)
-        {
-            return BadRequest(new ErrorResponse(400, ["Ürünler silinemedi."]));
-        }
-
+        await _productService.DeleteRangeAsync(ids, null, true);
+        await _unitOfWork.SaveChangesAsync();
+        
         return Ok(new DataResponse<bool>(true));
     }
 
@@ -229,11 +232,8 @@ public class ProductController : BaseController
     [RoleValidation("User")]
     public async Task<IActionResult> DeleteRangeForUserAsync([FromBody] IEnumerable<Guid> ids)
     {
-        var result = await _productService.DeleteRangeAsync(ids, UserId.ToString(), false);
-        if (!result)
-        {
-            return BadRequest(new ErrorResponse(400, ["Ürünler silinemedi."]));
-        }
+        await _productService.DeleteRangeAsync(ids, UserId.ToString(), false);
+        await _unitOfWork.SaveChangesAsync();
 
         return Ok(new DataResponse<bool>(true));
     }
@@ -250,6 +250,7 @@ public class ProductController : BaseController
                 return BadRequest(new ErrorResponse(400, ["Ürün depoya eklenemedi."]));
             }
 
+            await _unitOfWork.SaveChangesAsync();
             return Ok(new DataResponse<bool>(true));
         }
         catch (KeyNotFoundException ex)
@@ -270,6 +271,7 @@ public class ProductController : BaseController
                 return BadRequest(new ErrorResponse(400, ["Ürün depodan kaldırılamadı."]));
             }
 
+            await _unitOfWork.SaveChangesAsync();
             return Ok(new DataResponse<bool>(true));
         }
         catch (KeyNotFoundException ex)
@@ -290,6 +292,7 @@ public class ProductController : BaseController
                 return BadRequest(new ErrorResponse(400, ["Ürün stoğu düşürülemedi."]));
             }
 
+            await _unitOfWork.SaveChangesAsync();
             return Ok(new DataResponse<bool>(true));
         }
         catch (KeyNotFoundException ex)
