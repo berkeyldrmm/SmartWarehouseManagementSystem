@@ -1,0 +1,6 @@
+@SmartWarehouseManagementSystem_HostAddress = http://localhost:5052
+
+GET {{SmartWarehouseManagementSystem_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
